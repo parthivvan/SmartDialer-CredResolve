@@ -15,7 +15,7 @@ Campaign -> Pacing Engine (Progressive | Predictive) -> Safety Controller -> Cal
 
 ```bash
 python -m pip install pytest
-python -m pytest -q                      # 39 tests (~10 s)
+python -m pytest -q                      # 39 tests (the simulation tests may take about a minute)
 python -m smartdialer.demos              # the 5 required failure cases + 2 extras, narrated
 python -m smartdialer.sim                # scenarios A-E x {progressive, predictive} -> results/simulation.{md,json}
 python -m smartdialer.loadtest           # 100 / 1,000 / 10,000 agents -> results/loadtest.{md,json}
@@ -37,6 +37,30 @@ python -m smartdialer.loadtest           # 100 / 1,000 / 10,000 agents -> result
 | `smartdialer/demos.py` | Executable failure scenarios (tests assert on them) |
 | `smartdialer/sim.py`, `loadtest.py` | Simulation and load test |
 | `docs/` | `ARCHITECTURE.md` (diagrams), `ADR.md`, `SCALE.md`, `FINAL_ANSWER.md`, `BUILD_PLAN.md`, `INTERVIEW_PREP.md` |
+
+## Reviewer quick path
+
+If you have five minutes, run the commands below in this order. They exercise the parts of the
+prototype that are easiest to get subtly wrong: concurrent allocation, unreliable provider events,
+the non-bypassable safety boundary, and recovery after failures.
+
+```bash
+python -m pytest -q
+python -m smartdialer.demos
+python -m smartdialer.sim
+```
+
+| Assignment requirement | Evidence in this repository |
+|---|---|
+| Progressive and predictive dialing | `smartdialer/pacing.py`, `smartdialer/dialer.py` |
+| Separate, non-bypassable safety controller | `smartdialer/safety.py`, HMAC decision check in `smartdialer/allocator.py`, `tests/test_safety.py` |
+| Agent and call lifecycles | `smartdialer/states.py`, diagrams in `docs/ARCHITECTURE.md` |
+| Concurrent agent/borrower allocation | compare-and-set operations in `smartdialer/store.py`, `tests/test_concurrency.py` |
+| Duplicate and out-of-order provider events | `smartdialer/events.py`, `tests/test_events.py` |
+| Two distinct mock providers and outage handling | `smartdialer/providers/`, `smartdialer/health.py`, `tests/test_failures.py` |
+| Required failure cases | `python -m smartdialer.demos` and `results/demos_output.txt` |
+| Simulation and scaling analysis | `smartdialer/sim.py`, `smartdialer/loadtest.py`, `results/`, `docs/SCALE.md` |
+| Architecture decisions and final short answer | `docs/ADR.md`, `docs/FINAL_ANSWER.md` |
 
 ## Headline results (simulation, 100 agents, 30 virtual minutes; abandon cap = 3%)
 
