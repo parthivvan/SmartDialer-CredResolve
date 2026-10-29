@@ -1,0 +1,52 @@
+{
+ "cycle_cost": [
+  {
+   "agents": 100,
+   "cycle_ms_p50": 0.5,
+   "cycle_ms_max": 5.3,
+   "snapshot_ms": 0.24,
+   "pacing_ms": 0.01,
+   "safety_ms": 0.08,
+   "stats_ms": 0.02,
+   "allocate_ms_per_cycle": 0.02,
+   "dispatch_ms_per_call": 0.07,
+   "calls_created": 41
+  },
+  {
+   "agents": 1000,
+   "cycle_ms_p50": 0.9,
+   "cycle_ms_max": 25.7,
+   "snapshot_ms": 0.55,
+   "pacing_ms": 0.02,
+   "safety_ms": 0.09,
+   "stats_ms": 0.02,
+   "allocate_ms_per_cycle": 0.02,
+   "dispatch_ms_per_call": 0.05,
+   "calls_created": 405
+  },
+  {
+   "agents": 10000,
+   "cycle_ms_p50": 48.9,
+   "cycle_ms_max": 58.3,
+   "snapshot_ms": 3.68,
+   "pacing_ms": 0.06,
+   "safety_ms": 0.19,
+   "stats_ms": 0.07,
+   "allocate_ms_per_cycle": 12.23,
+   "dispatch_ms_per_call": 0.05,
+   "calls_created": 4052
+  }
+ ],
+ "reservation_contention": {
+  "agents": 2000,
+  "threads": 8,
+  "reserved": 2000,
+  "unique": 2000,
+  "double_allocations": 0,
+  "reservations_per_sec": 18315
+ },
+ "event_throughput": {
+  "events": 6000,
+  "events_per_sec_single_thread": 26151
+ }
+}

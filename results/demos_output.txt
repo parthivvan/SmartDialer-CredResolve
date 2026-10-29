@@ -1,0 +1,27 @@
+1. WORKER CRASH: agents+borrowers reserved, call row committed, worker dies right after place_call()
+   after crash : calls={'RESERVED': 3} agents={'RESERVED': 3} provider.place_calls=1
+   reconciler  : {'redispatched': 3, 'polled': 0, 'forced': 0, 'orphan_borrowers': 0, 'orphan_agents': 0}  calls={'INITIATED': 3} provider.place_calls=3 (no double dial)
+
+2a. PROVIDER API OUTAGE: provider A's place_call() times out from t=0 (webhooks for existing calls still flow)
+    {'breaker_opened_at': 24, 'inflight_at_outage': 12, 'calls_by_provider': {'A': 44, 'B': 15}, 'failures': {'NO_ANSWER': 16, 'PROVIDER_TIMEOUT': 16}, 'completed_or_connected': 26, 'borrowers_burned': 0, 'final_breaker': [], 'agents': {'CONNECTED': 9, 'DIALING': 1, 'WRAP_UP': 2}, 'violations': []}
+
+2b. PROVIDER BLACKOUT: provider A goes completely dark with calls in flight (no API, no webhooks) for 120s
+    {'breaker_opened_at': 95, 'inflight_at_outage': 12, 'calls_by_provider': {'A': 25, 'B': 16}, 'failures': {'LOST': 12, 'NO_ANSWER': 12}, 'completed_or_connected': 17, 'borrowers_burned': 0, 'final_breaker': [], 'agents': {'CONNECTED': 8, 'WRAP_UP': 4}, 'violations': []}
+
+3. AGENT AVAILABILITY DROP: 100 agents, steady predictive dialing, then 40 vanish in one second
+   speculative calls ringing: 18 -> 9 one cycle later; decision=REJECT shed=9 approved=0 reasons=('EXPOSURE_ABOVE_BOUND_SHED', 'REDUCED_TO_SAFE_BOUND')
+   abandoned calls before drop=6, 200s after=6 (overall rate 0.98%)
+
+4. DUPLICATE EVENTS: provider sends ANSWERED, ANSWERED, ANSWERED, COMPLETED, COMPLETED
+   dispositions=['APPLIED', 'DUPLICATE', 'DUPLICATE', 'APPLIED', 'DUPLICATE']; state transitions applied=2
+
+5a. OUT OF ORDER: COMPLETED, ANSWERED, RINGING
+   {'dispositions': ['APPLIED', 'IGNORED_AFTER_TERMINAL', 'IGNORED_AFTER_TERMINAL'], 'call': 'COMPLETED', 'agent': 'AVAILABLE'}
+5b. CRASH AFTER ANSWERED: handler applies ANSWERED then dies before COMMIT; COMPLETED arrives; ANSWERED is redelivered
+   {'after_crash': {'call': 'INITIATED', 'events': 0}, 'then': ['APPLIED', 'IGNORED_AFTER_TERMINAL'], 'call': 'COMPLETED', 'agent': 'AVAILABLE'}
+
+6. AGENT DISAPPEARS DURING CALL SETUP: agent logs out while the call is ringing
+   {'result': 'OFFLINE_CALL_CANCELLED', 'call': ('CANCELLED', 'AGENT_LOST'), 'borrower': ('PENDING', 0), 'agent': 'OFFLINE', 'hangup_sent': 1}
+
+7. RACE: 16 workers try to reserve the same single agent -> winners=[0]
+
